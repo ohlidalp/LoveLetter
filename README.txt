@@ -86,5 +86,38 @@ ________________________________________________________________________________
             -d directory_for_documentation
             [.. sources ..]
 
+________________________________________________________________________________
 
+ Documentation object reference
+ ==============================
 
+ LuaDoc works in two phases:
+ * The taglet parses source files and generates Documentation object
+ * The doclet reads Documentation and renders target files.
+ Following reference also marks which parts are original/added in LL.
+
+ Documentation
+ {
+     files:HashMap   = <string, DocumentationElement> -- indexed by file name, luadoc
+     modules:HashMap = <string, DocumentationElement> -- indexed by module, luadoc
+ }
+
+ DocumentationElement
+ {
+     type:string       = ["file" | "module"] -- luadoc
+     name:string                             -- full path of file or name of module, luadoc
+     doc:List          = <Block>             -- all documentation blocks, number-indexed, luadoc
+     functions:HashMap = <string, Block>     -- only functions, indexed by function name, luadoc
+     tables:HashMap    = <string, Block>     -- only table definitions, indexed by table name, luadoc
+ }
+
+ Block
+ {
+     class:string  = ["module" | "function" | "table"] -- luadoc
+     name:string                                       -- luadoc
+     summary:string                                    -- luadoc
+     description:string                                -- luadoc
+     comment:List  = <string>                          -- luadoc
+     code:List     = <string>                          -- luadoc
+     param:HashMap = <string, string>                  -- luadoc
+ }

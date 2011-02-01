@@ -52,14 +52,27 @@
 <p><small><b>Release:</b> <%=file_doc.release%></small></p>
 <%end%>
 
+<%if #file_doc.classes > 0 then%>
+<h2>Classes</h2>
+<table class="class_list">
+	<%for _, class_name in ipairs(file_doc.classes) do%>
+		<%local class_data = file_doc.classes[class_name]%>
+		<tr>
+			<td class="name" nowrap><a href="#<%=class_name%>"><%=class_name%></a></td>
+			<td class="summary"><%=class_data.summary%></td>
+		</tr>
+	<%end%>
+</table>
+<%end%>
+
 <%if #file_doc.functions > 0 then%>
 <h2>Functions</h2>
 <table class="function_list">
 <%for _, func_name in ipairs(file_doc.functions) do
   local func_data = file_doc.functions[func_name]%>
 	<tr>
-	<td class="name" nowrap><%=func_data.private and "local " or ""%><a href="#<%=func_name%>"><%=func_name%></a>&nbsp;(<%=llDoclet:tableConcat(func_data.param, ", ")%>)</td>
-	<td class="summary"><%=func_data.summary%></td>
+		<td class="name" nowrap><%=func_data.private and "local " or ""%><a href="#<%=func_name%>"><%=func_name%></a>&nbsp;(<%=llDoclet:tableConcat(func_data.param, ", ")%>)</td>
+		<td class="summary"><%=func_data.summary%></td>
 	</tr>
 <%end%>
 </table>
@@ -71,8 +84,8 @@
 <table class="table_list">
 <%for _, tab_name in ipairs(file_doc.tables) do%>
 	<tr>
-	<td class="name" nowrap><a href="#<%=tab_name%>"><%=tab_name%></a></td>
-	<td class="summary"><%=file_doc.tables[tab_name].summary%></td>
+		<td class="name" nowrap><a href="#<%=tab_name%>"><%=tab_name%></a></td>
+		<td class="summary"><%=file_doc.tables[tab_name].summary%></td>
 	</tr>
 <%end%>
 </table>

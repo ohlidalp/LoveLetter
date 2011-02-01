@@ -1,5 +1,6 @@
 <%
 --------------------------------------------------------------------------------
+-- Table template
 -- This file is part of LoveLetter project.
 --------------------------------------------------------------------------------
 %>
@@ -9,13 +10,20 @@
 
 <%if type(tab.field) == "table" and #tab.field > 0 then%>
 <em>Fields</em>
-<ul>
-	<%for p = 1, #tab.field do%>
-	<li>
-	  <%=tab.field[p]%>: <%=tab.field[tab.field[p]] or ""%>
-	</li>
+<div style='text-align:left;'>
+<table class='variables'>
+	<%
+	for p = 1, #tab.field do
+		local name = tab.field[p];
+		local field = tab.field[name];
+		%>
+		<tr>
+			<td class='name'><%=name%></td>
+			<td class='datatype'><%=field["datatype"]%></td>
+			<td class='description'><%=field["description"]%></td>
+		</tr>
 	<%end%>
-</ul>
+</table></div>
 <%end%>
 
 </dd>

@@ -3,7 +3,7 @@
 <html>
 <head>
     <title>Reference</title>
-    <link rel="stylesheet" href="<%=luadoc.doclet.html.link('luadoc.css', 'modules/'..module_doc.name)%>" type="text/css" />
+    <link rel="stylesheet" href="<%=luadoc.doclet.LoveLetter.link('luadoc.css', 'modules/'..module_doc.name)%>" type="text/css" />
 	<!--meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/-->
 </head>
 
@@ -19,7 +19,7 @@
 <div id="main">
 
 <div id="navigation">
-<%=luadoc.doclet.html.include("menu.lp", { doc=doc, module_doc=module_doc })%>
+<%=luadoc.doclet.LoveLetter.include("menu.lp", { doc=doc, module_doc=module_doc })%>
 
 </div><!-- id="navigation" -->
 
@@ -44,13 +44,30 @@
 <p><small><b>Release:</b> <%=module_doc.release%></small></p>
 <%end%>
 
-<%if #module_doc.functions > 0 then%>
+<%if module_doc.classes and #module_doc.classes > 0 then%>
+<h2>Classes</h2>
+<table class="table_list">
+<%for _, class_name in ipairs(module_doc.classes) do%>
+	<tr>
+		<td class="name" nowrap><a href="#<%=class_name%>"><%=class_name%></a></td>
+		<td class="summary"><%=module_doc.classes[class_name].summary%></td>
+	</tr>
+<%end%>
+</table>
+<%end%>
+
+<% if #module_doc.functions > 0 then%>
 <h2>Functions</h2>
 <table class="function_list">
 <%for _, func_name in ipairs(module_doc.functions) do
   local func_data = module_doc.functions[func_name]%>
 	<tr>
-	<td class="name" nowrap><%=func_data.private and "local " or ""%><a href="#<%=func_name%>"><%=func_name%></a>&nbsp;(<%=table.concat(module_doc.functions[func_name].param, ", ")%>)</td>
+	<td class="name" nowrap><%=func_data.private and "local " or ""%>
+		<a href="#<%=func_name%>"><%=func_name%></a>&nbsp;(
+		<%if module_doc.functions[func_name].param then%>
+			<%=table.concat(module_doc.functions[func_name].param, ", ")%>)
+		<%end%>
+	</td>
 	<td class="summary"><%=module_doc.functions[func_name].summary%></td>
 	</tr>
 <%end%>
@@ -74,12 +91,11 @@
 <br/>
 <br/>
 
-
 <%if #module_doc.functions > 0 then%>
 <h2><a name="functions"></a>Functions</h2>
 <dl class="function">
 <%for _, func_name in ipairs(module_doc.functions) do%>
-<%=luadoc.doclet.html.include("function.lp", { doc=doc, module_doc=module_doc, func=module_doc.functions[func_name] })%>
+<%=luadoc.doclet.LoveLetter.include("function.lp", { doc=doc, module_doc=module_doc, func=module_doc.functions[func_name] })%>
 <%end%>
 </dl>
 <%end%>
@@ -89,7 +105,7 @@
 <h2><a name="tables"></a>Tables</h2>
 <dl class="table">
 <%for _, tab_name in ipairs(module_doc.tables) do%>
-<%=luadoc.doclet.html.include("table.lp", { doc=doc, module_doc=module_doc, tab=module_doc.tables[tab_name] })%>
+<%=luadoc.doclet.LoveLetter.include("table.lp", { doc=doc, module_doc=module_doc, tab=module_doc.tables[tab_name] })%>
 <%end%>
 </dl>
 <%end%>
@@ -103,6 +119,6 @@
 	<p><a href="http://validator.w3.org/check?uri=referer"><img src="http://www.w3.org/Icons/valid-xhtml10" alt="Valid XHTML 1.0!" height="31" width="88" /></a></p>
 </div> <!-- id="about" -->
 
-</div> <!-- id="container" -->	
+</div> <!-- id="container" -->
 </body>
 </html>

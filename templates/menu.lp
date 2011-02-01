@@ -1,12 +1,17 @@
 <%
---------------------------------------------------------------------------------
+--[[ ---------------------------------------------------------------------------
 -- This file is part of LoveLetter project.
---------------------------------------------------------------------------------
+
+--TODO: What are 'module_doc' and 'file_doc' ?
+
+------------------------------------------------------------------------------]]
 
 if module_doc then
 	from = "modules/"..module_doc.name
 elseif file_doc then
 	from = "files/.."..file_doc.name
+elseif package_doc then
+	from = "packages/.."..package_doc.name
 else
 	from = ""
 end
@@ -21,8 +26,24 @@ end
 	<%end%>
 </ul>
 
+<!-- LoveLetter: package list (Count: <%=#doc.packages %>) -->
+<%if #doc.packages > 0 then%>
+<h1>Packages</h1>
+<ul>
+<%for _, package_name in ipairs(doc.packages) do
+	if package_doc and package_doc.name == package_name then%>
+	<li><strong><%=package_name%></strong></li>
+	<%else%>
+	<li>
+		<a href="<%=luadoc.doclet.LoveLetter.package_link(package_name, doc, from)%>"><%=package_name%></a>
+	</li>
+<%	end
+end%>
+</ul>
+<%end%>
 
-<!-- Module list -->
+
+<!-- Standart: Module list (Count: <%=#doc.modules %>) -->
 <%if not options.nomodules and #doc.modules > 0 then%>
 <h1>Modules</h1>
 <ul>
@@ -39,7 +60,7 @@ end%>
 <%end%>
 
 
-<!-- File list -->
+<!-- Standart: File list (Count: <%=#doc.files %>) -->
 <%if not options.nofiles and #doc.files > 0 then%>
 <h1>Files</h1>
 <ul>

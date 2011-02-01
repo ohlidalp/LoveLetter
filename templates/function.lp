@@ -18,13 +18,20 @@ end
 
 <%if type(func.param) == "table" and #func.param > 0 then%>
 <h3>Parameters</h3>
-<ul>
-	<%for p = 1, #func.param do%>
-	<li>
-	  <%=func.param[p]%>: <%=func.param[func.param[p]] or ""%>
-	</li>
-	<%end%>
-</ul>
+<table class='variables'>
+	<%for p = 1, #func.param do
+		local name = func.param[p];
+		local param = func.param[name] or {};
+		%>
+		<tr>
+		</td>
+			<td class='name'><%=name%></td>
+			<td class='datatype'><%=param["datatype"] or ""%></td>
+			<td class='description'><%=param["description"] or ""%></td>
+		</tr>
+		<%end%>
+</table>
+
 <%end%>
 
 

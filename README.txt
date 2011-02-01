@@ -41,10 +41,10 @@ ________________________________________________________________________________
 
 ________________________________________________________________________________
 
- Features and TODO list
+ Features and roadmap
  ======================
 
- LL is in very early development stage (I call it unmarked alpha), so there's
+ LL is in very early development stage, so there's
  not much of 'added value' to it at the moment. Also, you may (probably will)
  encounter debugging messages and broken HTML output.
  However, it still does work!
@@ -52,11 +52,13 @@ ________________________________________________________________________________
  Features
  --------
      * On parsing error, prints file name and line number.
+     * Supports data-type declaration for variables.
+     * Supports grouping files into packages; a files in package will have
+       a 'package' page in resulting doc, showing contents of all files together
 
  TODO
  ----
      * Support hand-made packages (without using package() function)
-     * Recognize classes
      * Support data-type declarations (with links to class definitions)
      * Support inheritance (print list of inherited methods)
      * Recognize MiddleClass (https://github.com/kikito/middleclass) constructs.
@@ -88,6 +90,37 @@ ________________________________________________________________________________
 
 ________________________________________________________________________________
 
+ Documentation guidelines
+ ========================
+
+ LL is an extension of LuaDoc, so to understand it well you should read LuaDoc's
+ manual first. LL preserves meanings of standart tags, only extends some and
+ adds new. Unknown tags are reported as warnings, but parsing continues.
+
+ Tags
+ ----
+
+     @type:enum      ~ Type of documented entity = [table | function | class]
+                     ~ Alias for LuaDoc's @class
+     @package:string ~ Package name.
+                     ~ Allows grouping multiple files/modules into one package.
+
+ Datatypes
+ ---------
+
+ LL supports optional specifying data types for @param, @field and @return.
+ To specify datatype, use this syntax:
+     @tag name : datatype [description]
+ The spaces around the ':' are optional. Without ':', all text is treated as
+ description (standart behaviour).
+
+ For return types, specify datatype as follows
+     @return : datatype [description]
+ Again, the space after ':' is optional. Without ':', all text is treated as
+ description (standart behaviour).
+
+________________________________________________________________________________
+
  Documentation object reference
  ==============================
 
@@ -98,13 +131,29 @@ ________________________________________________________________________________
 
  Documentation
  {
-     files:HashMap   = <string, DocumentationElement> -- indexed by file name, luadoc
-     modules:HashMap = <string, DocumentationElement> -- indexed by module, luadoc
+     files:HashMap   = <string, DocumentationElement> -- files without package, indexed by file name, luadoc
+     modules:HashMap = <string, DocumentationElement> -- modules without package, indexed by module, luadoc
+     packages:HashMap = <string, Package>             -- indexed by package name, LL
+     classes          = <string, string>              -- List of file names indexed by class names, LL
+ }
+
+ Package -- LL
+ {
+     name:string                                      -- LL
+     description:string                               -- LL
+     files:HashMap   = <string, DocumentationElement> -- indexed by file name
+     modules:HashMap = <string, DocumentationElement> -- indexed by module
+     functions:HashMap = <string, Block>              -- only functions, indexed by function name
+     tables:HashMap    = <string, Block>              -- only table definitions, indexed by table name
+     classes           = <string, string>              -- List of file names indexed by class names, LL
  }
 
  DocumentationElement
  {
-     type:string       = ["file" | "module"] -- luadoc
+     type:string       = [
+                             "file"          -- luadoc
+                             "module"        -- luadoc
+                         ]
      name:string                             -- full path of file or name of module, luadoc
      doc:List          = <Block>             -- all documentation blocks, number-indexed, luadoc
      functions:HashMap = <string, Block>     -- only functions, indexed by function name, luadoc

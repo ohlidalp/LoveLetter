@@ -1,8 +1,6 @@
 ----------------------------------d---------------------------------------------
 -- LoveLetter taglet
--- NOTE: Two meanings of 'class'
---     The standart Luadoc meaning is "entity type" {table,function,module}
---     Classes in OO-programming sense are reffered to as 'ooClass'
+
 -------------------------------------------------------------------------------
 
 local assert, pairs, tostring, type = assert, pairs, tostring, type;
@@ -18,15 +16,19 @@ local tags = require "luadoc.taglet.LoveLetter.tags"
 module 'luadoc.taglet.LoveLetter'
 
 -- Global LoveLetter object.
-local llTaglet = {
-	currentPath = ""; -- Path of file currently being processed.
-	currentLine = -1; -- Line currently being processed (counting from 1)
+local ll_taglet = {
+	current_path = ""; -- Path of file currently being processed.
+	current_line = -1; -- Line currently being processed (counting from 1)
 	debug = true;
 }
 
-function llTaglet:error (msg)
-	print("File : "..self.currentPath);
-	print("Line : "..self.currentLine);
+function ll_taglet:print_position()
+	print("File : "..self.current_path);
+	print("Line : "..self.current_line);
+end
+
+function ll_taglet:error (msg)
+	self:print_position();
 	print("Error: "..msg);
 	assert(false);
 end
@@ -34,15 +36,15 @@ end
 -------------------------------------------------------------------------------
 -- Extended assert; also prints file and line where error occured
 -------------------------------------------------------------------------------
-function llTaglet:assert (value, message)
+function ll_taglet:assert (value, message)
 	if not value then
 		self:error(message);
 	end
 end
 
-function llTaglet:incrementLine(n)
+function ll_taglet:increment_line(n)
 	n = n or 1;
-	self.currentLine = self.currentLine + n;
+	self.current_line = self.current_line + n;
 end
 
 
@@ -95,8 +97,8 @@ local function check_function (line)
 
 	-- TODO: remove these assert's?
 	if info ~= nil then
-		llTaglet:assert(info.name, "function name undefined")
-		llTaglet:assert(info.param, string.format("undefined parameter list for function `%s'", info.name))
+		ll_taglet:assert(info.name, "function name undefined")
+		ll_taglet:assert(info.param, string.format("undefined parameter list for function `%s'", info.name))
 	end
 
 	return info
@@ -182,9 +184,10 @@ end
 -------------------------------------------------------------------------------
 -- Parses the information inside a block comment
 -- @param block block with comment field
+-- @param package_name package name already found, if any
 -- @return block parameter
 
-local function parse_comment (block, first_line)
+local function parse_comment (block, first_line, package_name)
 
 	-- get the first non-empty line of code
 	local code = table.foreachi(block.code, function(_, line)
@@ -226,29 +229,35 @@ local function parse_comment (block, first_line)
 	local currenttag = "description"
 	local currenttext
 
-	table.foreachi(block.comment, function (_, line)
+	for _, line in ipairs(block.comment) do
 		line = util.trim_comment(line)
-
 		local r, _, tag, text = string.find(line, "@([_%w%.]+)%s+(.*)")
 		if r ~= nil then
 			-- found new tag, add previous one, and start a new one
-			-- TODO: what to do with invalid tags? issue an error? or log a warning?
-			tags.handle(currenttag, block, currenttext, llTaglet)
+			tags.handle(currenttag, block, currenttext, ll_taglet)
+			if tag == "package" then
+				package_name = package_name or text
+			end
 
 			currenttag = tag
 			currenttext = text
 		else
 			currenttext = util.concat(currenttext, line)
-			llTaglet:assert(string.sub(currenttext, 1, 1) ~= " ", string.format("`%s', `%s'", currenttext, line))
+			ll_taglet:assert(string.sub(currenttext, 1, 1) ~= " ", string.format("`%s', `%s'", currenttext, line))
 		end
-	end)
-	tags.handle(currenttag, block, currenttext, llTaglet)
+	end
+	tags.handle(currenttag, block, currenttext, ll_taglet)
+	if tag == "package" then
+		package_name = package_name or text
+	end
 
 	-- extracts summary information from the description
 	block.summary = parse_summary(block.description)
-	llTaglet:assert(string.sub(block.description, 1, 1) ~= " ", string.format("`%s'", block.description))
 
-	return block
+	--OLD: why?
+	--ll_taglet:assert(string.sub(block.description, 1, 1) ~= " ", string.format("`%s'", block.description))
+
+	return block, package_name
 end
 
 -------------------------------------------------------------------------------
@@ -257,11 +266,13 @@ end
 -- @param f file handle
 -- @param line being parsed
 -- @param modulename module already found, if any
+-- @param package_name package name already found, if any
 -- @return line
 -- @return block parsed
 -- @return modulename if found
+-- @return package_name if found
 
-local function parse_block (f, line, modulename, first)
+local function parse_block (f, line, modulename, package_name, first)
 	local block = {
 		comment = {},
 		code = {},
@@ -274,21 +285,22 @@ local function parse_block (f, line, modulename, first)
 			line, block.code, modulename = parse_code(f, line, modulename)
 
 			-- parse information in block comment
-			block = parse_comment(block, first)
+			block, package_name = parse_comment(block, first, package_name)
+			--print(string.format("DBG parse_block() package_name=%s", tostring(package_name)));
 
-			return line, block, modulename
+			return line, block, modulename, package_name
 		else
 			table.insert(block.comment, line)
 			line = f:read()
-			llTaglet:incrementLine();
+			ll_taglet:increment_line();
 		end
 	end
 	-- reached end of file
 
 	-- parse information in block comment
-	block = parse_comment(block, first)
+	block, package_name = parse_comment(block, first, package_name)
 
-	return line, block, modulename
+	return line, block, modulename, package_name
 end
 
 -------------------------------------------------------------------------------
@@ -300,19 +312,22 @@ end
 function parse_file (filepath, doc)
 	local blocks = {}
 	local modulename = nil
+	local package_name = nil
+	--print("-----Parsing file "..filepath.." -----")
 
 	-- read each line
 	local f = io.open(filepath, "r")
 	local i = 1
 	local line = f:read()
 	local first = true
-	llTaglet.currentPath = filepath;
-	llTaglet.currentLine = 1;
+	ll_taglet.current_path = filepath
+	ll_taglet.current_line = 1
 	while line ~= nil do
 		if string.find(line, "^[\t ]*%-%-%-") then
 			-- reached a luadoc block
 			local block
-			line, block, modulename = parse_block(f, line, modulename, first)
+			line, block, modulename, package_name = parse_block(f, line, modulename, package_name, first)
+			--print(string.format("DBG parse_file() package_name = %s", tostring(package_name)));
 			table.insert(blocks, block)
 		else
 			-- look for a module definition
@@ -324,12 +339,12 @@ function parse_file (filepath, doc)
 		end
 		first = false
 		i = i + 1
-		llTaglet.currentLine = llTaglet.currentLine + 1;
+		ll_taglet:increment_line();
 	end
-	llTaglet.currentLine = -1;
+	ll_taglet.current_line = -1;
 	f:close()
 	-- store blocks in file hierarchy
-	llTaglet:assert(doc.files[filepath] == nil, string.format("doc for file `%s' already defined", filepath))
+	ll_taglet:assert(doc.files[filepath] == nil, string.format("doc for file `%s' already defined", filepath))
 	table.insert(doc.files, filepath)
 	doc.files[filepath] = {
 		type = "file",
@@ -429,6 +444,33 @@ function parse_file (filepath, doc)
 		doc.files[filepath].tables[t.name] = t
 	end
 
+	-- make classes table
+	doc.files[filepath].classes = {}
+	for t in class_iterator(blocks, "class")() do
+		table.insert(doc.files[filepath].classes, t.name)
+		doc.files[filepath].classes[t.name] = t
+	end
+
+	--print(string.format("DBG parse_file() [line 446] package_name = %s", tostring(package_name)));
+	-- Put the file/module in package, if specified
+	if package_name then
+		--print(string.format("DBG saving package: %s", package_name));
+		if not doc.packages[package_name] then
+			table.insert(doc.packages, package_name)
+			doc.packages[package_name] = {
+				name = package_name,
+				description = "",
+				files = {},
+				modules = {},
+				functions = {},
+				tables = {},
+				classes = {},
+			}
+		end
+		local pkg = doc.packages[package_name]
+		table.insert(pkg.files, doc.files[filepath]);
+	end
+
 	return doc
 end
 
@@ -466,7 +508,7 @@ function directory (path, doc)
 	for f in lfs.dir(path) do
 		local fullpath = path .. "/" .. f
 		local attr = lfs.attributes(fullpath)
-		llTaglet:assert(attr, string.format("error stating file `%s'", fullpath))
+		ll_taglet:assert(attr, string.format("error stating file `%s'", fullpath))
 
 		if attr.mode == "file" then
 			doc = file(fullpath, doc)
@@ -496,22 +538,24 @@ end
 
 function start (files, doc)
 	print("Using LoveLetter taglet");
-	llTaglet:assert(files, "file list not specified")
+	ll_taglet:assert(files, "file list not specified")
 
 	-- Create an empty document, or use the given one
 	doc = doc or {
 		files = {},
 		modules = {},
-		ooClasses = {},
+		classes = {},
+		packages = {},
 	}
-	llTaglet:assert(doc.files, "undefined `files' field")
-	llTaglet:assert(doc.modules, "undefined `modules' field")
-	llTaglet:assert(doc.ooClasses, "undefined `ooClasses' field")
+	ll_taglet:assert(doc.files, "undefined `doc.files' field")
+	ll_taglet:assert(doc.modules, "undefined `doc.modules' field")
+	ll_taglet:assert(doc.classes, "undefined `doc.classes' field")
+	ll_taglet:assert(doc.packages, "undefined `doc.packages' field")
 
 	--OLDtable.foreachi(files, function (_, path)
 	for _,path in ipairs(files) do
 		local attr = lfs.attributes(path)
-		llTaglet:assert(attr, string.format("error stating path `%s'", path))
+		ll_taglet:assert(attr, string.format("error stating path `%s'", path))
 
 		if attr.mode == "file" then
 			doc = file(path, doc)
@@ -523,7 +567,7 @@ function start (files, doc)
 	-- order arrays alphabetically
 	recsort(doc.files)
 	recsort(doc.modules)
-	recsort(doc.ooClasses)
+	recsort(doc.classes)
 
 	return doc
 end

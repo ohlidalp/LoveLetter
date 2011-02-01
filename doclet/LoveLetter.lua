@@ -76,6 +76,7 @@ function include (template, env)
 	env.io = io
 	env.lp = lp
 	env.ipairs = ipairs
+	env.pairs = pairs
 	env.tonumber = tonumber
 	env.tostring = tostring
 	env.type = type
@@ -145,6 +146,29 @@ function file_link (to, from)
 end
 
 -------------------------------------------------------------------------------
+-- Returns the name of the html file to be generated from a LL package.
+-- @param package_name
+-- @param from path of where am I, based on this we append ..'s to the
+-- beginning of path
+-- @return name of the generated html file for the package
+
+function package_link (package_name, doc, from)
+	-- Check args
+	assert(package_name, "luadoc.doclet.LoveLetter.package_link(): Missing argument #1 package_name")
+	assert(doc, "luadoc.doclet.LoveLetter.package_link(): Missing argument #2 doc")
+	from = from or ""
+
+	if doc.packages[package_name] == nil then
+		print(string.format("unresolved reference to package `%s'", modulename))
+		return
+	end
+
+	local href = "packages/" .. package_name .. ".html"
+	string.gsub(from, "/", function () href = "../" .. href end)
+	return href
+end
+
+-------------------------------------------------------------------------------
 -- Returns a link to a function or to a table
 -- @param fname name of the function or table to link to.
 -- @param doc documentation table
@@ -209,8 +233,8 @@ end
 
 -------------------------------------------------------------------------------
 -- Assembly the output filename for an input file.
--- TODO: change the name of this function
-function out_file (filename)
+
+function mk_file_filename(filename)
 	local h = filename
 	h = string.gsub(h, "lua$", "html")
 	h = string.gsub(h, "luadoc$", "html")
@@ -222,15 +246,22 @@ end
 
 -------------------------------------------------------------------------------
 -- Assembly the output filename for a module.
--- TODO: change the name of this function
-function out_module (modulename)
+
+function mk_module_filename (modulename)
 	local h = modulename .. ".html"
 	h = "modules/" .. h
 	h = options.output_dir .. h
 	return h
 end
 
------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- Assembly the output filename for a package.
+
+function mk_package_filename (package_name)
+	return options.output_dir .. "packages/" .. package_name .. ".html"
+end
+
+-------------------------------------------------------------------------------
 -- Generate the output.
 -- @param doc Table with the structured documentation.
 
@@ -248,12 +279,28 @@ function start (doc)
 		f:close()
 	end
 
+	-- Process packages
+	if not options.nopackages then
+		for _, package_name in ipairs(doc.packages) do
+			local package_doc = doc.packages[package_name]
+			-- assembly the filename
+			local filename = mk_package_filename(package_doc.name)
+			logger:info(string.format("generating file `%s'", filename))
+
+			local f = lfs.open(filename, "w")
+			assert(f, string.format("could not open `%s' for writing", filename))
+			io.output(f)
+			include("package.lp", { doc = doc, package_doc = package_doc} )
+			f:close()
+		end
+	end
+
 	-- Process modules
 	if not options.nomodules then
 		for _, modulename in ipairs(doc.modules) do
 			local module_doc = doc.modules[modulename]
 			-- assembly the filename
-			local filename = out_module(modulename)
+			local filename = mk_module_filename(modulename)
 			logger:info(string.format("generating file `%s'", filename))
 
 			local f = lfs.open(filename, "w")
@@ -269,7 +316,7 @@ function start (doc)
 		for _, filepath in ipairs(doc.files) do
 			local file_doc = doc.files[filepath]
 			-- assembly the filename
-			local filename = out_file(file_doc.name)
+			local filename = mk_file_filename(file_doc.name)
 			logger:info(string.format("generating file `%s'", filename))
 
 			local f = lfs.open(filename, "w")

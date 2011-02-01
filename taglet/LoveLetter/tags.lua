@@ -8,9 +8,48 @@ local util = require "luadoc.util"
 local string = require "string"
 local table = require "table"
 local assert, type, tostring = assert, type, tostring
-local print = print;
+local print, setmetatable = print, setmetatable
 
 module "luadoc.taglet.LoveLetter.tags"
+
+-------------------------------------------------------------------------------
+-- Parses a variable entry (function param/ table field)
+-- @return : string Variable name
+-- @return : string Datatype, or "" if undefined.
+-- @return : string Description, or "" if undefined.
+
+local function parse_variable (text, ll_taglet)
+	--print("DBG tags.parse_variable() =========================== text:"..text);
+	-- Pattern with datatype and description
+	local pattern_t_d = "^([_%w%.]+)%s*:%s*([_%w.]+)%s+(.*)%s*"
+	-- Pattern with datatype, without description
+	local pattern_t   = "^([_%w%.]+)%s*:%s*([_%w.]+)%s*"
+	-- Without datatype, with description
+	local pattern_d   = "^([_%w%.]+)%s+(.*)%s*"
+	-- Without datatype and description
+	local pattern_    = "^([_%w%.]+)%s*"
+
+	local desc = ""
+	local match, _, name, datatype, desc = string.find(text, pattern_t_d)
+	--print("DBG t_d match:"..tostring(match))
+	if match == nil then
+		match, _, name, datatype = string.find(text, pattern_t)
+		--print("DBG t match:"..tostring(match))
+		if match == nil then
+			match, _, name, desc = string.find(text, pattern_d)
+			--print("DBG d match:"..tostring(match))
+			if match == nil then
+				match, _, name = string.find(text, pattern_)
+				--print("DBG _ match:"..tostring(match))
+				if match == nil then
+					ll_taglet:error("field/attr declaration invalid")
+				end
+			end
+		end
+	end
+
+	return name, datatype or "", desc or ""
+end
 
 -------------------------------------------------------------------------------
 
@@ -25,7 +64,8 @@ end
 
 -------------------------------------------------------------------------------
 -- Set the class of a comment block. Classes can be "module", "function",
--- "table". The first two classes are automatic, extracted from the source code
+-- "table", "class" (object-oriented programming).
+-- The first two classes are automatic, extracted from the source code
 
 local function class (tag, block, text)
 	block[tag] = text
@@ -45,28 +85,26 @@ end
 
 -------------------------------------------------------------------------------
 
-local function field (tag, block, text, loveLetter)
+local function field (tag, block, text, ll_taglet)
 	if block["class"] ~= "table" then
 		luadoc.logger:warn("documenting `field' for block that is not a `table'")
 	end
-	block[tag] = block[tag] or {}
+	block["field"] = block["field"] or {}
 
-	local _, _, name, desc = string.find(text, "^([_%w%.]+)%s+(.*)")
-	local errMsg = "";
-	if loveLetter.debug then
-		errMsg = errMsg .. string.format("\t\ntag:%s\t\nblock (table#%d) :%s\t\ntext:%s\nname:%s\ndesc:%s", tostring(tag), #block, table.concat(block), tostring(text), tostring(name), tostring(desc));
-	end
-	if not text or text == "" then
-		loveLetter:error("Field name not defined"..errMsg)
-	elseif not name and not desc then
-		name, desc = text, "";
-	else
+	local name, datatype, desc = parse_variable(text, ll_taglet);
 
-	end
+	table.insert(block["field"], name);
+	-- The concat metamethod is for compatibility with standart doclet.
+	--print(string.format("DBG tags.field() datatype:%s \ndesc:%s, ", datatype, desc));
+	block["field"][name] = setmetatable({
+		description = desc,
+		datatype = datatype
+	}, {
+		__concat = function(t)
+			return t.desc
+		end
+	})
 
-	table.insert(block[tag], name)
-	block[tag][name] = desc
-	--print(string.format("DBG tags.field() ------------------------------- \t\ntag:%s\t\nblock (table#%d) :%s\t\ntext:%s\nname:%s\ndesc:%s\n", tostring(tag), #block, table.concat(block), tostring(text), tostring(name), tostring(desc)));
 end
 
 -------------------------------------------------------------------------------
@@ -87,10 +125,11 @@ end
 -- @param block Table with previous information about the block.
 -- @param text String with the current line beeing processed.
 
-local function param (tag, block, text)
+local function param (tag, block, text, ll_taglet)
 	block[tag] = block[tag] or {}
 	-- TODO: make this pattern more flexible, accepting empty descriptions
-	local _, _, name, desc = string.find(text, "^([_%w%.]+)%s+(.*)")
+	--local _, _, name, desc = string.find(text, "^([_%w%.]+)%s+(.*)")
+	local name, datatype, desc = parse_variable(text, ll_taglet)
 	if not name then
 		luadoc.logger:warn("parameter `name' not defined [["..text.."]]: skipping")
 		return
@@ -104,7 +143,15 @@ local function param (tag, block, text)
 		luadoc.logger:warn(string.format("documenting undefined parameter `%s'", name))
 		table.insert(block[tag], name)
 	end
-	block[tag][name] = desc
+	-- The concat metamethod is for compatibility with standart doclet.
+	block[tag][name] = setmetatable({
+		description = desc,
+		datatype = datatype
+	}, {
+		__concat = function(t)
+			return t.desc
+		end
+	})
 end
 
 -------------------------------------------------------------------------------
@@ -144,6 +191,7 @@ local function see (tag, block, text)
 end
 
 -------------------------------------------------------------------------------
+-- @param block string/table
 -- @see ret
 
 local function usage (tag, block, text)
@@ -161,9 +209,11 @@ end
 local handlers = {}
 handlers["author"] = author
 handlers["class"] = class
+handlers["type"] = class -- 'type' tag is an alias for 'class'
 handlers["copyright"] = copyright
 handlers["description"] = description
 handlers["field"] = field
+handlers["attr"] = field -- 'attr' is an alias of 'field'
 handlers["name"] = name
 handlers["param"] = param
 handlers["release"] = release
@@ -171,13 +221,15 @@ handlers["return"] = ret
 handlers["see"] = see
 handlers["usage"] = usage
 
+
 -------------------------------------------------------------------------------
 
-function handle (tag, block, text, loveLetter)
+function handle (tag, block, text, ll_taglet)
+	if tag == "package" then return end
 	if not handlers[tag] then
 		luadoc.logger:error(string.format("undefined handler for tag `%s'", tag))
+		print(string.format("Undefined tag '%s'", tag));
 		return
 	end
---	assert(handlers[tag], string.format("undefined handler for tag `%s'", tag))
-	return handlers[tag](tag, block, text, loveLetter);
+	return handlers[tag](tag, block, text, ll_taglet)
 end

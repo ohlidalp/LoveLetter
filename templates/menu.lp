@@ -12,6 +12,8 @@ elseif file_doc then
 	from = "files/.."..file_doc.name
 elseif package_doc then
 	from = "packages/.."..package_doc.name
+elseif class_doc then
+	from = "classes/.."..class_doc.name
 else
 	from = ""
 end

@@ -262,6 +262,13 @@ function mk_package_filename (package_name)
 end
 
 -------------------------------------------------------------------------------
+-- Assembly the output filename for a class.
+
+function mk_class_filename (class_name)
+	return options.output_dir .. "classes/" .. class_name .. ".html"
+end
+
+-------------------------------------------------------------------------------
 -- Generate the output.
 -- @param doc Table with the structured documentation.
 
@@ -278,6 +285,24 @@ function start (doc)
 		include("index.lp", { doc = doc })
 		f:close()
 	end
+
+	-- Process classes
+	for _, filepath in ipairs(doc.files) do
+		local class_list = doc.files[filepath].classes
+		for _, class_name in ipairs(class_list) do
+			local class_doc = class_list[class_name]
+			-- assembly the filename
+			local filename = mk_class_filename(class_doc.name)
+			logger:info(string.format("generating file `%s'", filename))
+
+			local f = lfs.open(filename, "w")
+			assert(f, string.format("could not open `%s' for writing", filename))
+			io.output(f)
+			include("class.lp", { doc = doc, class_doc = class_doc} )
+			f:close()
+		end
+	end
+
 
 	-- Process packages
 	if not options.nopackages then

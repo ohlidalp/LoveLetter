@@ -127,46 +127,44 @@ ________________________________________________________________________________
  LuaDoc works in two phases:
  * The taglet parses source files and generates Documentation object
  * The doclet reads Documentation and renders target files.
- Following reference also marks which parts are original/added in LL.
 
  Documentation
  {
-     files:HashMap   = <string, DocumentationElement> -- files without package, indexed by file name, luadoc
-     modules:HashMap = <string, DocumentationElement> -- modules without package, indexed by module, luadoc
-     packages:HashMap = <string, Package>             -- indexed by package name, LL
-     classes          = <string, string>              -- List of file names indexed by class names, LL
+     files:HashMap   = <string, DocumentationElement> -- files without package, indexed by file name
+     modules:HashMap = <string, DocumentationElement> -- modules without package, indexed by module
+     packages:HashMap = <string, Package>             -- indexed by package name
+     classes          = <string, string>              -- List of file names indexed by class names
  }
 
  Package -- LL
  {
-     name:string                                      -- LL
-     description:string                               -- LL
+     name:string
+     description:string
      files:HashMap   = <string, DocumentationElement> -- indexed by file name
      modules:HashMap = <string, DocumentationElement> -- indexed by module
      functions:HashMap = <string, Block>              -- only functions, indexed by function name
      tables:HashMap    = <string, Block>              -- only table definitions, indexed by table name
-     classes           = <string, string>              -- List of file names indexed by class names, LL
+     classes           = <string, string>             -- List of file names indexed by class names
  }
 
  DocumentationElement
  {
-     type:string       = [
-                             "file"          -- luadoc
-                             "module"        -- luadoc
-                         ]
-     name:string                             -- full path of file or name of module, luadoc
-     doc:List          = <Block>             -- all documentation blocks, number-indexed, luadoc
-     functions:HashMap = <string, Block>     -- only functions, indexed by function name, luadoc
-     tables:HashMap    = <string, Block>     -- only table definitions, indexed by table name, luadoc
+     type:string       = [ "file" | "module" ]
+     name:string                             -- full path of file or name of module
+     doc:List          = <Block>             -- all documentation blocks, number-indexed
+     functions:HashMap = <string, Block>     -- only functions, indexed by function name
+     tables:HashMap    = <string, Block>     -- only table definitions, indexed by table name
  }
 
  Block
  {
-     class:string  = ["module" | "function" | "table"] -- luadoc
-     name:string                                       -- luadoc
-     summary:string                                    -- luadoc
-     description:string                                -- luadoc
-     comment:List  = <string>                          -- luadoc
-     code:List     = <string>                          -- luadoc
-     param:HashMap = <string, string>                  -- luadoc
+     class:string  = ["module" | "function" | "table" | "class" ]
+     name:string
+     summary:string
+     description:string
+     comment:List  = <string>
+     code:List     = <string>
+     param:HashMap = <string, table{datatype,description}>
+     methods:HashMap = <string, Block>
+     superclasses:List = <string, Block>
  }

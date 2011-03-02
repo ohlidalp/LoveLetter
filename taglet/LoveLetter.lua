@@ -105,6 +105,36 @@ local function check_function (line)
 end
 
 -------------------------------------------------------------------------------
+-- Checks if the line contains a MiddleClass library class() construct.
+-- @param line string with line text
+-- @return class information or nil if no definition found
+
+local function check_class (line)
+	line = util.trim(line)
+
+	local match, _, class_name, class_args
+		= string.find(line, "%.*%s*([_%w%.]+)%s*=%s*class%((.*)%)");
+	if match ~= nil then
+		local info = {
+			name = class_name,
+			superclasses = {},
+		}
+		local first = true;
+		for name in string.gmatch(class_args, "'?([_%.%l%u%d]+)'?") do
+			if first then
+				first = false
+			else
+				table.insert(info.superclasses, name);
+			end
+		end
+	else
+		return nil
+	end
+
+	return info
+end
+
+-------------------------------------------------------------------------------
 -- Checks if the line contains a module definition.
 -- @param line string with line text
 -- @param currentmodule module already found, if any
@@ -208,6 +238,7 @@ local function parse_comment (block, first_line, package_name)
 	if code ~= nil then
 		local func_info = check_function(code)
 		local module_name = check_module(code)
+		local class_info = check_class(code)
 		if func_info then
 			block.class = "function"
 			block.name = func_info.name
@@ -217,6 +248,13 @@ local function parse_comment (block, first_line, package_name)
 			block.class = "module"
 			block.name = module_name
 			block.param = {}
+		elseif class_info then
+			block.class = "class"
+			block.name = class_info.name
+			block.superclasses = block.superclasses or {}
+			for _, class in ipairs(class_info.superclasses) do
+				table.insert(block.superclasses, class)
+			end
 		else
 			block.param = {}
 		end
@@ -430,11 +468,30 @@ function parse_file (filepath, doc)
 		end
 	end
 
+	-- make classes table
+	local class_list = {}
+	for t in class_iterator(blocks, "class")() do
+		table.insert(class_list, t.name)
+		t.methods = {}
+		t.field = t.field or {}
+		class_list[t.name] = t
+	end
+	doc.files[filepath].classes = class_list
+
 	-- make functions table
 	doc.files[filepath].functions = {}
 	for f in class_iterator(blocks, "function")() do
-		table.insert(doc.files[filepath].functions, f.name)
-		doc.files[filepath].functions[f.name] = f
+		-- Check if it's a method
+		local match, _, method_of, name = string.find(f.name, "^([_%w]+):([_%w]+).*")
+		if match and class_list[method_of] then
+			f.name = name
+			table.insert(class_list[method_of].methods, f.name)
+			class_list[method_of].methods[f.name] = f
+		else
+			-- Ordinary function
+			table.insert(doc.files[filepath].functions, f.name)
+			doc.files[filepath].functions[f.name] = f
+		end
 	end
 
 	-- make tables table
@@ -444,12 +501,7 @@ function parse_file (filepath, doc)
 		doc.files[filepath].tables[t.name] = t
 	end
 
-	-- make classes table
-	doc.files[filepath].classes = {}
-	for t in class_iterator(blocks, "class")() do
-		table.insert(doc.files[filepath].classes, t.name)
-		doc.files[filepath].classes[t.name] = t
-	end
+
 
 	--print(string.format("DBG parse_file() [line 446] package_name = %s", tostring(package_name)));
 	-- Put the file/module in package, if specified

@@ -4,45 +4,73 @@
 --------------------------------------------------------------------------------
 %>
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html>
 <html>
 <% print("Executing LoveLetter index.lp") %>
 <head>
+	<meta charset='UTF-8'>
     <title>Reference</title>
-    <link rel="stylesheet" href="<%=luadoc.doclet.LoveLetter.link("luadoc.css")%>" type="text/css" />
+    <link rel="stylesheet" href="<%=luadoc.doclet.LoveLetter.link("luadoc.css")%>" type="text/css">
 	<!--meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/-->
 </head>
 
 <body>
-<div id="container">
 
-<div id="product">
-	<div id="product_logo"></div>
-	<div id="product_name"><big><b></b></big></div>
-	<div id="product_description"></div>
-</div> <!-- id="product" -->
-
-<div id="main">
-
-<div id="navigation">
+<nav><div id="navigation">
 <%=luadoc.doclet.LoveLetter.include("menu.lp", { doc=doc })%>
-
-</div> <!-- id="navigation" -->
-
+</div><!-- id="navigation" --></nav>
 <div id="content">
+
+<h1>Index</h1>
+
+
+
+<%if not options.nopackages and #doc.packages > 0 then%>
+<h2>Packages</h2>
+<table class="package_list">
+<%for idx, package_name in ipairs(doc.packages) do%>
+	<tr>
+		<td class="name">
+		<a href="<%=luadoc.doclet.LoveLetter.package_link(package_name, doc)%>"><%=package_name%></a></td>
+		<td class="summary"><!--< %=doc.packages[package_name].summary%> --></td>
+	</tr>
+<%end%>
+</table>
+<%end%>
+
+
+
+<%if not options.noclasses and #doc.classes > 0 then%>
+<h2>Classes</h2>
+<table class="class_list">
+<tr>
+<%for idx, class_name in ipairs(doc.classes) do%>
+		<td class="name">
+		<a href="<%=luadoc.doclet.LoveLetter.class_link(class_name, doc)%>"><%=class_name%></a></td>
+		<!-- <td class="summary"><%=doc.modules[modulename].summary%></td> -->
+	<%if idx % 3 == 0 then%>
+	</tr><tr>
+	<%end%>
+<%end%>
+</tr>
+</table>
+<%end%>
 
 
 <%if not options.nomodules and #doc.modules > 0 then%>
 <h2>Modules</h2>
 <table class="module_list">
+<tr>
 <!--<tr><td colspan="2">Modules</td></tr>-->
-<%for _, modulename in ipairs(doc.modules) do%>
-	<tr>
-		<td class="name"><a href="<%=luadoc.doclet.LoveLetter.module_link(modulename, doc)%>"><%=modulename%></a></td>
-		<td class="summary"><%=doc.modules[modulename].summary%></td>
-	</tr>
+<%for idx, modulename in ipairs(doc.modules) do%>
+		<td class="name">
+		<a href="<%=luadoc.doclet.LoveLetter.module_link(modulename, doc)%>"><%=modulename%></a></td>
+		<!-- <td class="summary"><%=doc.modules[modulename].summary%></td> -->
+	<%if idx % 3 == 0 then%>
+	</tr><tr>
+	<%end%>
 <%end%>
+</tr>
 </table>
 <%end%>
 
@@ -51,19 +79,21 @@
 <%if not options.nofiles and #doc.files > 0 then%>
 <h2>Files</h2>
 <table class="file_list">
+<tr>
 <!--<tr><td colspan="2">Files</td></tr>-->
-<%for _, filepath in ipairs(doc.files) do%>
-	<tr>
+<%for idx, filepath in ipairs(doc.files) do%>
+
 		<td class="name"><a href="<%=luadoc.doclet.LoveLetter.file_link(filepath)%>"><%=filepath%></a></td>
-		<td class="summary"></td>
-	</tr>
+		<!-- <td class="summary"></td> -->
+	<%if idx % 2 == 0 then%>
+	</tr><tr>
+	<%end%>
 <%end%>
+</tr>
 </table>
 <%end%>
 
 </div> <!-- id="content" -->
-
-</div> <!-- id="main" -->
 
 <div id="about">
 	<p>
@@ -72,6 +102,5 @@
 	</p>
 </div> <!-- id="about" -->
 
-</div> <!-- id="container" -->
 </body>
 </html>

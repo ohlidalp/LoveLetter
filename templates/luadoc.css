@@ -3,10 +3,11 @@ body {
 	margin:0px;
 	margin-left: 5px;
     margin-right: 5px;
-	background-color: #3b3b3b;
+	background-color: rgb(255,255,255);
 	font-family: "Helvetica Neue", Helvetica, Geneva, Arial, sans-serif;
 	font-weight:normal;
 	font-size:0.8em;
+	/* orig background-color: #3b3b3b;*/
 }
 
 code {
@@ -26,9 +27,13 @@ h1, h2, h3, h4 {
 	margin:0.2em;
 }
 
-textarea, pre, tt { font-size:10pt; }
-body, td, th { color:#000000; }
-small { font-size:0.85em; }
+textarea, pre, tt {
+	font-size:10pt;
+}
+
+small {
+	font-size:0.85em;
+}
 
 h1 {
 	font-size: 2em;
@@ -39,10 +44,13 @@ h2 {
 	font-size:1.5em;
 	font-weight: bold;
 }
+
 h3 {
 	font-size:1.35em;
 	font-weight: bold;
+	padding-top: 1em;
 }
+
 h4 {
 	font-size:1.15em;
 	font-weight: bold;
@@ -51,15 +59,19 @@ h4 {
 a:link {
 	font-weight:bold; color: #004080; text-decoration: none;
 }
+
 a:visited {
 	font-weight:bold; color: #006699; text-decoration: none;
 }
-a:link:hover { text-decoration:underline; }
-hr { color:#cccccc }
-img { border-width: 0px; }
 
+a:link:hover {
+	text-decoration:underline;
+}
 
-h3 { padding-top: 1em; }
+img {
+	border-width: 0px;
+}
+
 
 p { margin-left: 1em; }
 
@@ -116,12 +128,13 @@ table {
     margin-left: auto;
     margin-right: auto;
 }
+
 th {
     border: 1px solid black;
     padding: 0.5em;
 }
+
 td {
-    border: 1px solid black;
     padding: 0.5em;
 }
 div.header, div.footer { margin-left: 0em; }
@@ -145,18 +158,6 @@ div.header, div.footer { margin-left: 0em; }
 	font-size: 2em;
 }
 
-#main
-{
-	/*
-	margin-top: 25px;
-	border-style: solid;
-	background-color: white;
-	*/
-	border: none;
-	border: 1px solid black;
-	background-color: white;
-}
-
 #navigation
 {
 	width: 18em;
@@ -164,6 +165,7 @@ div.header, div.footer { margin-left: 0em; }
 	overflow:visible;
 	float: left;
 	background-color: #fff;
+
 }
 
 #navigation h1 {
@@ -182,6 +184,7 @@ div.header, div.footer { margin-left: 0em; }
 	list-style-type: none;
 	margin: 0px;
 	padding: 0px;
+
 }
 
 #navigation li
@@ -203,10 +206,10 @@ div.header, div.footer { margin-left: 0em; }
 {
 	margin-left: 18em;
 	padding: 1em;
-	border-left: 2px solid #cccccc;
-	border-right: 2px solid #cccccc;
+
+	border-left: 2px solid rgb(100,100,100);
 	background-color: #ffffff;
-	margin-bottom: 15px;
+
 }
 
 #content h1
@@ -274,45 +277,71 @@ table.module_list td
 	border-width: 1px;
 	padding: 3px;
 	border-style: solid;
-	border-color: #cccccc;
+
 }
 table.module_list td.name { background-color: #f0f0f0; }
 table.module_list td.summary { width: 100%; }
 
-table.file_list
-{
+table.file_list {
 	border-width: 1px;
 	border-style: solid;
-	border-color: #cccccc;
 	border-collapse: collapse;
 }
-table.file_list td
-{
+
+table.file_list td {
 	border-width: 1px;
 	padding: 3px;
 	border-style: solid;
-	border-color: #cccccc;
 }
-table.file_list td.name { background-color: #f0f0f0; }
-table.file_list td.summary { width: 100%; }
+
+table.file_list td.name {
+	background-color: #f0f0f0;
+}
+
+table.file_list td.summary {
+	width: 100%;
+}
+
+table.package_list {
+	border-width: 1px;
+	border-style: solid;
+	border-collapse: collapse;
+}
+
+table.package_list td {
+	border-width: 1px;
+	padding: 3px;
+	border-style: solid;
+}
+
+table.package_list td.name {
+	background-color: #f0f0f0;
+}
+
+table.package_list td.summary {
+	width: 100%;
+}
 
 table.function_list
 {
 	border-width: 1px;
 	border-style: solid;
-	border-color: #cccccc;
+
 	border-collapse: collapse;
 }
+
 table.function_list td
 {
 	border-width: 1px;
 	padding: 3px;
 	border-style: solid;
-	border-color: #cccccc;
+
 }
+
 table.function_list td.name {
 	background-color: #def7f7;
 }
+
 table.function_list td.summary {
 	width: 100%;
 }
@@ -323,7 +352,7 @@ table.table_list
 {
 	border-width: 1px;
 	border-style: solid;
-	border-color: #cccccc;
+
 	border-collapse: collapse;
 }
 table.table_list td
@@ -331,7 +360,7 @@ table.table_list td
 	border-width: 1px;
 	padding: 3px;
 	border-style: solid;
-	border-color: #cccccc;
+
 }
 table.table_list td.name { background-color: #d8f3af;
 	width: 250px;
@@ -436,8 +465,6 @@ dl.example dt {
 	padding-bottom: 10px;
 }
 
-/******************************** LoveLetter **********************************/
-
 /* table fields */
 
 table.variables {
@@ -493,5 +520,10 @@ table.class_list td.name {
 }
 table.class_list td.summary {
 	width: 100%;
+}
+strong.menu_heading {
+	font-weight: bold;
+	font-size: 1.3em;
+	padding: 3px;
 }
 

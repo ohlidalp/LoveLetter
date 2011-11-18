@@ -536,11 +536,13 @@ end
 
 function file (filepath, doc)
 	local patterns = { "%.lua$", "%.luadoc$" }
-	local valid = table.foreachi(patterns, function (_, pattern)
+	local valid = false;
+	for _, pattern in ipairs(patterns) do
 		if string.find(filepath, pattern) ~= nil then
-			return true
+			valid = true;
+			break;
 		end
-	end)
+	end
 
 	if valid then
 		logger:info(string.format("processing file `%s'", filepath))
@@ -604,7 +606,6 @@ function start (files, doc)
 	ll_taglet:assert(doc.classes, "undefined `doc.classes' field")
 	ll_taglet:assert(doc.packages, "undefined `doc.packages' field")
 
-	--OLDtable.foreachi(files, function (_, path)
 	for _,path in ipairs(files) do
 		local attr = lfs.attributes(path)
 		ll_taglet:assert(attr, string.format("error stating path `%s'", path))
